@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Católico</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #fff200, #ffffff, #fff200);
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    h1 {
+      width: 100vw;
+      text-align: center;
+      color: #000;
+      background-color: #fff200;
+      padding: 40px 0;
+      margin: 0;
+      box-shadow: 0 2px 15px rgba(255, 242, 0, 0.6);
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+    }
+
+    body {
+      padding-top: 140px;
+    }
+
+    .quiz {
+      margin-top: 20px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .question {
+      margin-bottom: 15px;
+      text-align: center;
+    }
+
+    .question h3 {
+      margin: 0 0 20px;
+    }
+
+    .grid-opcoes {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      justify-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #000000cf;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .resultado {
+      text-align: center;
+      margin-top: 20px;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .detalhes {
+      font-size: 12px;
+      color: #000000;
+      text-align: center;
+      margin-top: 10px;
+    }
+
+    .opcao-correta {
+      color: green;
+      font-weight: bold;
+    }
+
+    .opcao-errada {
+      color: red;
+      font-weight: bold;
+    }
+
+    .cruz {
+      position: fixed;
+      top: -50px;
+      font-size: 24px;
+      animation: cair 4s linear forwards;
+      z-index: 9999;
+    }
+
+    @keyframes cair {
+      to {
+        top: 100vh;
+        opacity: 0;
+      }
+    }
+
+    .barra-progresso-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 22px;
+      background-color: #ddd;
+      z-index: 999;
+    }
+
+    .barra-progresso {
+      height: 100%;
+      width: 0;
+      background-color: green;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <h1>Quiz Católico</h1>
+
+  <div id="quizContainer" class="quiz"></div>
+  <div class="resultado" id="resultado"></div>
+  <div class="detalhes" id="detalhes"></div>
+  <div class="barra-progresso-container">
+    <div id="barraProgresso" class="barra-progresso"></div>
+  </div>
+
+  <script>
+    const perguntas = [
+      {
+        pergunta: "Quem foi o primeiro Papa da Igreja Católica?",
+        opcoes: ["São Paulo", "Santo Agostinho", "São João", "São Pedro"],
+        correta: 3
+      },
+      {
+        pergunta: "Qual o significado da palavra 'Evangelho'?",
+        opcoes: ["Palavra de Deus", "Revelação", "Boa notícia", "Testemunho"],
+        correta: 2
+      },
+      {
+        pergunta: "Quantos livros tem a Bíblia Católica?",
+        opcoes: ["66", "70", "73", "75"],
+        correta: 2
+      },
+      {
+        pergunta: "Qual é o maior mandamento segundo Jesus?",
+        opcoes: ["Guardar o sábado", "Honrar pai e mãe", "Não matarás", "Amar a Deus sobre todas as coisas e ao próximo como a ti mesmo"],
+        correta: 3
+      },
+      {
+        pergunta: "Qual é o nome da mãe de Maria, mãe de Jesus?",
+        opcoes: ["Sara", "Isabel", "Sant’Ana", "Rebeca"],
+        correta: 2
+      },
+      {
+        pergunta: "Qual o livro da Bíblia que fala sobre a saída do povo hebreu do Egito?",
+        opcoes: ["Levítico", "Gênesis", "Êxodo", "Deuteronômio"],
+        correta: 2
+      },
+      {
+        pergunta: "Quantos papas já existiram até hoje (2024)?",
+        opcoes: ["256", "266", "240", "273"],
+        correta: 1
+      },
+      {
+        pergunta: "Qual o nome do apóstolo que traiu Jesus?",
+        opcoes: ["Pedro", "Tiago", "Judas Iscariotes", "João"],
+        correta: 2
+      },
+      {
+        pergunta: "Onde Jesus foi crucificado?",
+        opcoes: ["Belém", "Monte das Oliveiras", "Jerusalém", "Gólgota"],
+        correta: 3
+      },
+      {
+        pergunta: "Quem batizou Jesus?",
+        opcoes: ["São Pedro", "João Batista", "São Paulo", "Tiago"],
+        correta: 1
+      }
+    ];
+
+    let indiceAtual = 0;
+    let acertos = 0;
+    let acertadas = [];
+
+    const quizContainer = document.getElementById("quizContainer");
+    const barraProgresso = document.getElementById("barraProgresso");
+
+    function atualizarProgresso() {
+      const percentual = ((indiceAtual) / perguntas.length) * 100;
+      barraProgresso.style.width = percentual + "%";
+    }
+
+    function mostrarPergunta() {
+      atualizarProgresso();
+      quizContainer.innerHTML = "";
+      const item = perguntas[indiceAtual];
+
+      const div = document.createElement("div");
+      div.classList.add("question");
+
+      const h3 = document.createElement("h3");
+      h3.textContent = `${indiceAtual + 1}. ${item.pergunta}`;
+      div.appendChild(h3);
+
+      const grid = document.createElement("div");
+      grid.classList.add("grid-opcoes");
+
+      item.opcoes.forEach((opcao, i) => {
+        const botao = document.createElement("button");
+        botao.textContent = opcao;
+        botao.onclick = () => avaliarResposta(i);
+        grid.appendChild(botao);
+      });
+
+      div.appendChild(grid);
+      quizContainer.appendChild(div);
+    }
+
+    function avaliarResposta(selecionada) {
+      const correta = perguntas[indiceAtual].correta;
+      const botoes = document.querySelectorAll(".grid-opcoes button");
+
+      botoes.forEach((btn, i) => {
+        if (i === correta) {
+          btn.classList.add("opcao-correta");
+        } else if (i === selecionada) {
+          btn.classList.add("opcao-errada");
+        }
+        btn.disabled = true;
+      });
+
+      if (selecionada === correta) {
+        acertos++;
+        acertadas.push(`${indiceAtual + 1}`);
+      }
+
+      setTimeout(() => {
+        indiceAtual++;
+        if (indiceAtual < perguntas.length) {
+          mostrarPergunta();
+        } else {
+          mostrarResultado();
+        }
+      }, 1500);
+    }
+
+    function mostrarResultado() {
+      quizContainer.innerHTML = "";
+      document.getElementById("resultado").textContent = `Você acertou ${acertos} de ${perguntas.length} perguntas!`;
+      document.getElementById("detalhes").textContent = `Perguntas corretas: ${acertadas.join(", ")}`;
+
+      if (acertos === 10) barraProgresso.style.backgroundColor = "blue";
+      else if (acertos >= 6) barraProgresso.style.backgroundColor = "green";
+      else barraProgresso.style.backgroundColor = "red";
+
+      barraProgresso.style.width = "100%";
+
+      if (acertos === perguntas.length) gerarCruzes();
+    }
+
+    function gerarCruzes() {
+      for (let i = 0; i < 20; i++) {
+        const cruz = document.createElement("div");
+        cruz.classList.add("cruz");
+        cruz.textContent = "✝";
+        cruz.style.left = Math.random() * 100 + "vw";
+        cruz.style.fontSize = (20 + Math.random() * 30) + "px";
+        cruz.style.animationDuration = (2 + Math.random() * 3) + "s";
+        document.body.appendChild(cruz);
+        setTimeout(() => cruz.remove(), 5000);
+      }
+    }
+
+    mostrarPergunta();
+    
+  </script>
+</body>
+</html>
